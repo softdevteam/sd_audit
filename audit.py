@@ -16,7 +16,12 @@ GH_API_HOST = "api.github.com"
 GH_API_REPOS = "/users/softdevteam/repos"
 
 # If you want to skip any soft-dev repos, you can add them here.
-SD_SKIP_REPOS = []
+SD_SKIP_REPOS = [
+    # Skipping rustc forks for now, as at the time of writing upstream rust
+    # (and thus our forks) always have vulns which are out of our control. Once
+    # `cargo audit` passes on upstream rust, we can reconsider these.
+    "rustcgc", "ykrustc",
+]
 
 
 def get_sd_rust_repos(token_file):
