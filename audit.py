@@ -21,6 +21,8 @@ SD_SKIP_REPOS = [
     # (and thus our forks) always have vulns which are out of our control. Once
     # `cargo audit` passes on upstream rust, we can reconsider these.
     "rustcgc", "ykrustc",
+    # K2 is unmaintained.
+    "k2",
 ]
 
 
