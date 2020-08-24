@@ -42,9 +42,6 @@ def get_sd_rust_repos(token_file):
 
 
 def install_cargo_audit():
-    os.environ["RUSTUP_HOME"] = RUSTUP_HOME
-    os.environ["CARGO_HOME"] = CARGO_HOME
-
     check_call(["curl", "--proto", "=https", "--tlsv1.2", "-sSf",
                 "https://sh.rustup.rs", "-o", "rustup.sh"])
     check_call(["sh", "rustup.sh", "--no-modify-path", "-y"])
@@ -116,6 +113,9 @@ if __name__ == "__main__":
     except IndexError:
         print("usage: audit.py <token-file>")
         sys.exit(1)
+
+    os.environ["RUSTUP_HOME"] = RUSTUP_HOME
+    os.environ["CARGO_HOME"] = CARGO_HOME
 
     if not os.path.exists(".cargo"):
         install_cargo_audit()
