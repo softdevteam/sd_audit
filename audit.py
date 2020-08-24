@@ -26,6 +26,14 @@ SD_SKIP_REPOS = [
     "k2",
 ]
 
+# Security warnings to skip.
+# (repo-name, package, security id)
+SKIP_WARNINGS = set([
+    ("snare", "net2", "RUSTSEC-2020-0016"),
+])
+
+# XXX Implement skipping for vulnerabilities as needed.
+
 
 def get_sd_rust_repos(token_file):
     """Get a list of unarchived soft-dev repos written in Rust"""
@@ -91,7 +99,7 @@ def audit(name, repo):
         print(serr, file=sys.stderr)
         return False
 
-    if not process_json(js):
+    if not process_json(name, js):
         # Something is wrong. Print human readable output.
         try:
             check_call([CARGO, "audit", "-D"])
@@ -101,10 +109,24 @@ def audit(name, repo):
     return True
 
 
-def process_json(js):
-    if js["vulnerabilities"]["list"] or js["warnings"]:
-        return False
-    return True
+def process_json(repo_name, js):
+    ret = True
+
+    # First look at warnings.
+    for kind in js["warnings"].values():
+        for warn in kind:
+            adv = warn["advisory"]
+            tup = repo_name, adv["package"], adv["id"]
+            if tup not in SKIP_WARNINGS:
+                ret = False
+            else:
+                SKIP_WARNINGS.remove(tup)
+                print(f"Note: {adv['id']} for {adv['package']} skipped.")
+
+    if js["vulnerabilities"]["list"]:
+        ret = False  # XXX implement skipping for vulnerabilities.
+
+    return ret
 
 
 if __name__ == "__main__":
@@ -131,6 +153,11 @@ if __name__ == "__main__":
         res = audit(r.name, r.clone_url)
         if not res:
             problematic.append(r.name)
+
+    if SKIP_WARNINGS:
+        print("Warning: Unneccessarily skipped warnings:")
+        for i in SKIP_WARNINGS:
+            print(f"  {i}")
 
     if problematic:
         print("\n\nThe following repos have problems:")
