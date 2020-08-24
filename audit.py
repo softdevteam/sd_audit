@@ -5,6 +5,7 @@ import sys
 import json
 from subprocess import CalledProcessError, check_call, Popen, PIPE
 import github3 as gh3
+from datetime import date
 
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 WORK = os.path.join(SCRIPT_DIR, "work")
@@ -27,10 +28,10 @@ SD_SKIP_REPOS = [
 ]
 
 # Security warnings to skip.
-# (repo-name, package, security id)
-SKIP_WARNINGS = set([
-    ("snare", "net2", "RUSTSEC-2020-0016"),
-])
+# (repo-name, package, rustsec-id) -> expiry-date
+SKIP_WARNINGS = {
+    ("snare", "net2", "RUSTSEC-2020-0016"): date(2020, 10, 24),
+}
 
 # XXX Implement skipping for vulnerabilities as needed.
 
@@ -117,11 +118,18 @@ def process_json(repo_name, js):
         for warn in kind:
             adv = warn["advisory"]
             tup = repo_name, adv["package"], adv["id"]
-            if tup not in SKIP_WARNINGS:
+            try:
+                expiry = SKIP_WARNINGS[tup]
+            except KeyError:
                 ret = False
             else:
-                SKIP_WARNINGS.remove(tup)
-                print(f"Note: {adv['id']} for {adv['package']} skipped.")
+                del SKIP_WARNINGS[tup]
+                if expiry <= date.today():
+                    print(f"Note: skip for {adv['package']}/{adv['id']}"
+                          "has expired.")
+                    ret = False
+                else:
+                    print(f"Note: {adv['package']}/{adv['id']} was skipped.")
 
     if js["vulnerabilities"]["list"]:
         ret = False  # XXX implement skipping for vulnerabilities.
