@@ -2,7 +2,8 @@
 
 import os
 import sys
-from subprocess import CalledProcessError, check_call
+import json
+from subprocess import CalledProcessError, check_call, Popen, PIPE
 import github3 as gh3
 
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
@@ -82,11 +83,30 @@ def audit(name, repo):
         return False
 
     # Actually do the audit.
+    p = Popen([CARGO, "audit", "-D", "--json"], stdout=PIPE, stderr=PIPE)
+    sout, serr = p.communicate()
+
     try:
-        check_call([CARGO, "audit", "-D"])
-    except CalledProcessError:
+        js = json.loads(sout)
+    except json.JSONDecodeError as e:
+        print(e, file=sys.stderr)
+        print(sout, file=sys.stderr)
+        print(serr, file=sys.stderr)
         return False
 
+    if not process_json(js):
+        # Something is wrong. Print human readable output.
+        try:
+            check_call([CARGO, "audit", "-D"])
+        except CalledProcessError:
+            return False
+
+    return True
+
+
+def process_json(js):
+    if js["vulnerabilities"]["list"] or js["warnings"]:
+        return False
     return True
 
 
