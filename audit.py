@@ -2,8 +2,10 @@
 
 import os
 import sys
-from subprocess import CalledProcessError, check_call
+import json
+from subprocess import CalledProcessError, check_call, Popen, PIPE
 import github3 as gh3
+from datetime import date
 
 SCRIPT_DIR = os.path.abspath(os.path.dirname(__file__))
 WORK = os.path.join(SCRIPT_DIR, "work")
@@ -25,6 +27,14 @@ SD_SKIP_REPOS = [
     "k2",
 ]
 
+# Security warnings to skip.
+# (repo-name, package, rustsec-id) -> expiry-date
+SKIP_WARNINGS = {
+    ("snare", "net2", "RUSTSEC-2020-0016"): date(2020, 10, 24),
+}
+
+# XXX Implement skipping for vulnerabilities as needed.
+
 
 def get_sd_rust_repos(token_file):
     """Get a list of unarchived soft-dev repos written in Rust"""
@@ -41,9 +51,6 @@ def get_sd_rust_repos(token_file):
 
 
 def install_cargo_audit():
-    os.environ["RUSTUP_HOME"] = RUSTUP_HOME
-    os.environ["CARGO_HOME"] = CARGO_HOME
-
     check_call(["curl", "--proto", "=https", "--tlsv1.2", "-sSf",
                 "https://sh.rustup.rs", "-o", "rustup.sh"])
     check_call(["sh", "rustup.sh", "--no-modify-path", "-y"])
@@ -82,12 +89,52 @@ def audit(name, repo):
         return False
 
     # Actually do the audit.
+    p = Popen([CARGO, "audit", "-D", "--json"], stdout=PIPE, stderr=PIPE)
+    sout, serr = p.communicate()
+
     try:
-        check_call([CARGO, "audit", "-D"])
-    except CalledProcessError:
+        js = json.loads(sout)
+    except json.JSONDecodeError as e:
+        print(e, file=sys.stderr)
+        print(sout, file=sys.stderr)
+        print(serr, file=sys.stderr)
         return False
 
+    if not process_json(name, js):
+        # Something is wrong. Print human readable output.
+        try:
+            check_call([CARGO, "audit", "-D"])
+        except CalledProcessError:
+            return False
+
     return True
+
+
+def process_json(repo_name, js):
+    ret = True
+
+    # First look at warnings.
+    for kind in js["warnings"].values():
+        for warn in kind:
+            adv = warn["advisory"]
+            tup = repo_name, adv["package"], adv["id"]
+            try:
+                expiry = SKIP_WARNINGS[tup]
+            except KeyError:
+                ret = False
+            else:
+                del SKIP_WARNINGS[tup]
+                if expiry <= date.today():
+                    print(f"Note: skip for {adv['package']}/{adv['id']}"
+                          "has expired.")
+                    ret = False
+                else:
+                    print(f"Note: {adv['package']}/{adv['id']} was skipped.")
+
+    if js["vulnerabilities"]["list"]:
+        ret = False  # XXX implement skipping for vulnerabilities.
+
+    return ret
 
 
 if __name__ == "__main__":
@@ -96,6 +143,9 @@ if __name__ == "__main__":
     except IndexError:
         print("usage: audit.py <token-file>")
         sys.exit(1)
+
+    os.environ["RUSTUP_HOME"] = RUSTUP_HOME
+    os.environ["CARGO_HOME"] = CARGO_HOME
 
     if not os.path.exists(".cargo"):
         install_cargo_audit()
@@ -111,6 +161,11 @@ if __name__ == "__main__":
         res = audit(r.name, r.clone_url)
         if not res:
             problematic.append(r.name)
+
+    if SKIP_WARNINGS:
+        print("Warning: Unneccessarily skipped warnings:")
+        for i in SKIP_WARNINGS:
+            print(f"  {i}")
 
     if problematic:
         print("\n\nThe following repos have problems:")
