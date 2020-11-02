@@ -30,7 +30,7 @@ SD_SKIP_REPOS = [
 # Security warnings to skip.
 # (repo-name, package, rustsec-id) -> expiry-date
 SKIP_WARNINGS = {
-    ("snare", "net2", "RUSTSEC-2020-0016"): date(2020, 10, 24),
+    ("snare", "net2", "RUSTSEC-2020-0016"): date(2021, 04, 02),
 }
 
 # XXX Implement skipping for vulnerabilities as needed.
@@ -125,7 +125,7 @@ def process_json(repo_name, js):
             else:
                 del SKIP_WARNINGS[tup]
                 if expiry <= date.today():
-                    print(f"Note: skip for {adv['package']}/{adv['id']}"
+                    print(f"Note: skip for {adv['package']}/{adv['id']} "
                           "has expired.")
                     ret = False
                 else:
