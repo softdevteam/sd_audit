@@ -125,7 +125,7 @@ def process_json(repo_name, js):
             else:
                 del SKIP_WARNINGS[tup]
                 if expiry <= date.today():
-                    print(f"Note: skip for {adv['package']}/{adv['id']}"
+                    print(f"Note: skip for {adv['package']}/{adv['id']} "
                           "has expired.")
                     ret = False
                 else:
