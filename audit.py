@@ -89,7 +89,7 @@ def audit(name, repo):
         return False
 
     # Actually do the audit.
-    p = Popen([CARGO, "audit", "-D", "--json"], stdout=PIPE, stderr=PIPE)
+    p = Popen([CARGO, "audit", "-D", "warnings", "--json"], stdout=PIPE, stderr=PIPE)
     sout, serr = p.communicate()
 
     try:
@@ -103,7 +103,7 @@ def audit(name, repo):
     if not process_json(name, js):
         # Something is wrong. Print human readable output.
         try:
-            check_call([CARGO, "audit", "-D"])
+            check_call([CARGO, "audit", "-D", "warnings"])
         except CalledProcessError:
             return False
 
