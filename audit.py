@@ -33,6 +33,10 @@ SKIP_WARNINGS = {
     ("snare", "net2", "RUSTSEC-2020-0016"): date(2021, 4, 2),
 }
 
+CUSTOM_AUDIT_DIRS = {
+    "yk": [".", "internal_ws"],
+}
+
 # XXX Implement skipping for vulnerabilities as needed.
 
 
@@ -88,26 +92,39 @@ def audit(name, repo):
     except CalledProcessError:
         return False
 
-    # Actually do the audit.
-    p = Popen([CARGO, "audit", "-D", "warnings", "--json"], stdout=PIPE, stderr=PIPE)
-    sout, serr = p.communicate()
-
     try:
-        js = json.loads(sout)
-    except json.JSONDecodeError as e:
-        print(e, file=sys.stderr)
-        print(sout, file=sys.stderr)
-        print(serr, file=sys.stderr)
-        return False
+        dirs = CUSTOM_AUDIT_DIRS[name]
+    except KeyError:
+        # No custom directories, so just audit the top-level dir.
+        dirs = ["."]
 
-    if not process_json(name, js):
-        # Something is wrong. Print human readable output.
+    ok = True
+    for audit_dir in dirs:
+        # Actually do the audit.
+        print(f"Running audit in {audit_dir}")
+        os.chdir(audit_dir)
+
+        p = Popen([CARGO, "audit", "-D", "warnings", "--json"],
+                  stdout=PIPE, stderr=PIPE)
+        sout, serr = p.communicate()
+
         try:
-            check_call([CARGO, "audit", "-D", "warnings"])
-        except CalledProcessError:
-            return False
+            js = json.loads(sout)
+        except json.JSONDecodeError as e:
+            print(e, file=sys.stderr)
+            print(sout, file=sys.stderr)
+            print(serr, file=sys.stderr)
+            ok = False
+            continue
 
-    return True
+        if not process_json(name, js):
+            ok = False
+            # Something is wrong. Print human readable output.
+            try:
+                check_call([CARGO, "audit", "-D", "warnings"])
+            except CalledProcessError:
+                continue
+    return ok
 
 
 def process_json(repo_name, js):
