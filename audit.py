@@ -29,9 +29,8 @@ SD_SKIP_REPOS = [
 
 # Security warnings to skip.
 # (repo-name, package, rustsec-id) -> expiry-date
-SKIP_WARNINGS = {
-    ("snare", "net2", "RUSTSEC-2020-0016"): date(2021, 4, 2),
-}
+# Expiry date is `a datetime.date`.
+SKIP_WARNINGS = {}
 
 CUSTOM_AUDIT_DIRS = {
     "yk": [".", "internal_ws"],
