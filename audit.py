@@ -133,7 +133,11 @@ def process_json(repo_name, js):
     for kind in js["warnings"].values():
         for warn in kind:
             adv = warn["advisory"]
-            tup = repo_name, adv["package"], adv["id"]
+            if adv is not None:
+                tup = repo_name, adv["package"], adv["id"]
+            else:
+                # If the advisory field is None use dummy info.
+                tup = repo_name, None, None
             try:
                 expiry = SKIP_WARNINGS[tup]
             except KeyError:
