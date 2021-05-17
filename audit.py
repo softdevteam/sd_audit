@@ -17,14 +17,18 @@ RUSTUP_URL = "https://sh.rustup.rs/"
 GH_API_HOST = "api.github.com"
 GH_API_REPOS = "/users/softdevteam/repos"
 
+# Accounts to search for things to audit.
+AUDIT_ACCOUNTS = ["softdevteam", "ykjit"]
+
 # If you want to skip any soft-dev repos, you can add them here.
-SD_SKIP_REPOS = [
+SKIP_REPOS = [
     # Skipping rustc forks for now, as at the time of writing upstream rust
-    # (and thus our forks) always have vulns which are out of our control. Once
-    # `cargo audit` passes on upstream rust, we can reconsider these.
-    "ykrustc", "rustgc",
+    # (and thus our forks) always have vulns which are out of our control.
+    # Once `cargo audit` passes on upstream rust, we can reconsider these.
+    ("softdevteam", "ykrustc"),
+    ("softdevteam", "rustgc"),
     # K2 is unmaintained.
-    "k2",
+    ("softdevteam", "k2"),
 ]
 
 # Security warnings to skip.
@@ -32,9 +36,10 @@ SD_SKIP_REPOS = [
 # Expiry date is `a datetime.date`.
 SKIP_WARNINGS = {}
 
-CUSTOM_AUDIT_DIRS = {
-    "yk": [".", "internal_ws"],
-}
+# Repos which require the audit to run in a sub-dir.
+# Maps a (owner, repo-name) tuple to a collection of path components suitiable
+# for use with `os.path.join()`.
+CUSTOM_AUDIT_DIRS = {}
 
 # XXX Implement skipping for vulnerabilities as needed.
 
@@ -47,10 +52,10 @@ def get_sd_rust_repos(token_file):
 
     gh = gh3.login(token=token)
     return [r for r in gh.repositories() if
-            r.owner.login == "softdevteam" and
+            r.owner.login in AUDIT_ACCOUNTS and
             "Rust" in map(lambda tup: tup[0], r.languages()) and
             not r.archived and
-            r.name not in SD_SKIP_REPOS]
+            (r.owner.login, r.name) not in SKIP_REPOS]
 
 
 def install_cargo_audit():
@@ -60,7 +65,7 @@ def install_cargo_audit():
     check_call([CARGO, "install", "cargo-audit"])
 
 
-def audit(name, repo):
+def audit(name, owner, repo):
     direc = os.path.join(WORK, name)
 
     # Either pull or update the source from git.
@@ -92,7 +97,7 @@ def audit(name, repo):
         return False
 
     try:
-        dirs = CUSTOM_AUDIT_DIRS[name]
+        dirs = CUSTOM_AUDIT_DIRS[(owner, name)]
     except KeyError:
         # No custom directories, so just audit the top-level dir.
         dirs = ["."]
@@ -178,7 +183,7 @@ if __name__ == "__main__":
     problematic = []
     for r in repos:
         print(f"\n\nChecking {r.clone_url}...")
-        res = audit(r.name, r.clone_url)
+        res = audit(r.name, r.owner.login, r.clone_url)
         if not res:
             problematic.append(r.name)
 
