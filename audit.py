@@ -31,10 +31,10 @@ SKIP_REPOS = [
     ("softdevteam", "k2"),
 ]
 
-# Security warnings to skip.
-# (repo-name, package, rustsec-id) -> expiry-date
-# Expiry date is `a datetime.date`.
-SKIP_WARNINGS = {}
+# Security advisories to skip.
+# (repo-name, problem-package, rustsec-id) -> expiry-date
+# Expiry date is `a datetime.date`, e.g. `date(2021, 12, 2)`.
+SKIP_ADVISORIES = {}
 
 # Repos which require the audit to run in a sub-dir.
 # Maps a (owner, repo-name) tuple to a collection of path components suitiable
@@ -133,31 +133,41 @@ def audit(name, owner, repo):
 
 def process_json(repo_name, js):
     ret = True
+    problems = set()
 
     # First look at warnings.
     for kind in js["warnings"].values():
         for warn in kind:
             adv = warn["advisory"]
             if adv is not None:
-                tup = repo_name, adv["package"], adv["id"]
+                problems.add((repo_name, adv["package"], adv["id"]))
             else:
                 # If the advisory field is None use dummy info.
-                tup = repo_name, None, None
-            try:
-                expiry = SKIP_WARNINGS[tup]
-            except KeyError:
+                problems.add((repo_name, None, None))
+
+    # Now look at vulnerabilities.
+    for vuln in js["vulnerabilities"]["list"]:
+        adv = vuln["advisory"]
+        if adv is not None:
+            problems.add((repo_name, adv["package"], adv["id"]))
+        else:
+            # If the advisory field is None use dummy info.
+            problems.add((repo_name, None, None))
+
+    for tup in problems:
+        try:
+            expiry = SKIP_ADVISORIES[tup]
+        except KeyError:
+            ret = False
+        else:
+            del SKIP_ADVISORIES[tup]
+            _, pkg, adv_id = tup
+            if expiry <= date.today():
+                print(f"Note: skip for {pkg}/{adv_id} "
+                      "has expired.")
                 ret = False
             else:
-                del SKIP_WARNINGS[tup]
-                if expiry <= date.today():
-                    print(f"Note: skip for {adv['package']}/{adv['id']} "
-                          "has expired.")
-                    ret = False
-                else:
-                    print(f"Note: {adv['package']}/{adv['id']} was skipped.")
-
-    if js["vulnerabilities"]["list"]:
-        ret = False  # XXX implement skipping for vulnerabilities.
+                print(f"Note: {pkg}/{adv_id} was skipped.")
 
     return ret
 
@@ -203,9 +213,9 @@ if __name__ == "__main__":
         if not res:
             problematic.append(r.name)
 
-    if SKIP_WARNINGS:
+    if SKIP_ADVISORIES:
         print("Warning: Unneccessarily skipped warnings:")
-        for i in SKIP_WARNINGS:
+        for i in SKIP_ADVISORIES:
             print(f"  {i}")
 
     if problematic:
