@@ -166,8 +166,22 @@ if __name__ == "__main__":
     try:
         token_file = sys.argv[1]
     except IndexError:
-        print("usage: audit.py <token-file>")
+        print("usage: audit.py <token-file> [repo-name]")
         sys.exit(1)
+
+    try:
+        single_repo = sys.argv[2]
+    except IndexError:
+        single_repo = None
+
+    # When checking a single repo, don't report skips for other repos "unused".
+    rm_skips = set()
+    if single_repo:
+        for tup in SKIP_WARNINGS:
+            if tup[0] != single_repo:
+                rm_skips.add(tup)
+    for rm_skip in rm_skips:
+        del SKIP_WARNINGS[rm_skip]
 
     os.environ["RUSTUP_HOME"] = RUSTUP_HOME
     os.environ["CARGO_HOME"] = CARGO_HOME
@@ -182,6 +196,8 @@ if __name__ == "__main__":
 
     problematic = []
     for r in repos:
+        if single_repo and single_repo != r.name:
+            continue
         print(f"\n\nChecking {r.clone_url}...")
         res = audit(r.name, r.owner.login, r.clone_url)
         if not res:
