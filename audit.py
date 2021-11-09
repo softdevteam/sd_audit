@@ -34,6 +34,9 @@ SKIP_REPOS = [
 # Security advisories to skip.
 # (repo-name, problem-package, rustsec-id) -> expiry-date
 # Expiry date is `a datetime.date`, e.g. `date(2021, 12, 2)`.
+#
+# XXX the keys of this map should also contain the account that owns the repo,
+# in case different accounts contain a repo by the same name.
 SKIP_ADVISORIES = {
     ("yksom", "chrono", "RUSTSEC-2020-0159"): date(2021, 12, 1),
     ("yksom", "time", "RUSTSEC-2020-0071"): date(2021, 12, 1),
