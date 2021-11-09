@@ -34,7 +34,10 @@ SKIP_REPOS = [
 # Security advisories to skip.
 # (repo-name, problem-package, rustsec-id) -> expiry-date
 # Expiry date is `a datetime.date`, e.g. `date(2021, 12, 2)`.
-SKIP_ADVISORIES = {}
+SKIP_ADVISORIES = {
+    ("yksom", "chrono", "RUSTSEC-2020-0159"): date(2021, 12, 1),
+    ("yksom", "time", "RUSTSEC-2020-0071"): date(2021, 12, 1),
+}
 
 # Repos which require the audit to run in a sub-dir.
 # Maps a (owner, repo-name) tuple to a collection of path components suitiable
