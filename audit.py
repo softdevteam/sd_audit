@@ -45,7 +45,10 @@ SKIP_ADVISORIES = {
 # Repos which require the audit to run in a sub-dir.
 # Maps a (owner, repo-name) tuple to a collection of path components suitiable
 # for use with `os.path.join()`.
-CUSTOM_AUDIT_DIRS = {}
+CUSTOM_AUDIT_DIRS = {
+    ("ykjit", "ykcbf"): ["lang_tests"],
+    ("softdevteam", "error_recovery_experiment"): ["runner/java_parser"],
+}
 
 # XXX Implement skipping for vulnerabilities as needed.
 
