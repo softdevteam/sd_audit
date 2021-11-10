@@ -193,11 +193,11 @@ if __name__ == "__main__":
     # When checking a single repo, don't report skips for other repos "unused".
     rm_skips = set()
     if single_repo:
-        for tup in SKIP_WARNINGS:
+        for tup in SKIP_ADVISORIES:
             if tup[0] != single_repo:
                 rm_skips.add(tup)
     for rm_skip in rm_skips:
-        del SKIP_WARNINGS[rm_skip]
+        del SKIP_ADVISORIES[rm_skip]
 
     os.environ["RUSTUP_HOME"] = RUSTUP_HOME
     os.environ["CARGO_HOME"] = CARGO_HOME
