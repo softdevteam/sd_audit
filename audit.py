@@ -3,7 +3,7 @@
 import os
 import sys
 import json
-from subprocess import CalledProcessError, check_call, Popen, PIPE
+from subprocess import CalledProcessError, check_call, Popen, DEVNULL, PIPE
 import github3 as gh3
 from datetime import date
 
@@ -113,6 +113,17 @@ def audit(name, owner, repo):
         # Actually do the audit.
         print(f"Running audit in {audit_dir}")
         os.chdir(audit_dir)
+
+        # If we didn't clone afresh and `Cargo.lock` isn't tracked in git, we
+        # should run `cargo update` to get the same deps as we would have with
+        # a fresh clone.
+        if src_exists and os.path.exists("Cargo.lock"):
+            try:
+                check_call(["git", "ls-files", "--error-unmatch",
+                            "Cargo.lock"], stdout=DEVNULL, stderr=DEVNULL)
+            except CalledProcessError:
+                # `Cargo.lock` not in git.
+                check_call(["cargo", "update"])
 
         p = Popen([CARGO, "audit", "-D", "warnings", "--json"],
                   stdout=PIPE, stderr=PIPE)
