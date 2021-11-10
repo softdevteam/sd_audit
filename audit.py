@@ -90,11 +90,6 @@ def audit(name, owner, repo):
 
     os.chdir(direc)
 
-    # If there's no Cargo.toml, we can't audit it.
-    if not os.path.exists("Cargo.toml"):
-        print("No Cargo.toml")
-        return True
-
     # Repos which use sub-modules (like Rust forks) need the submodules sources
     # available too.
     try:
@@ -113,6 +108,12 @@ def audit(name, owner, repo):
         # Actually do the audit.
         print(f"Running audit in {audit_dir}")
         os.chdir(audit_dir)
+
+        # If there's no Cargo.toml, we can't audit it.
+        if not os.path.exists("Cargo.toml"):
+            print("No Cargo.toml. Can't audit!")
+            ok = False
+            continue
 
         # If we didn't clone afresh and `Cargo.lock` isn't tracked in git, we
         # should run `cargo update` to get the same deps as we would have with
