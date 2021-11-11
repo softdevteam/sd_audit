@@ -3,7 +3,7 @@
 import os
 import sys
 import json
-from subprocess import CalledProcessError, check_call, Popen, PIPE
+from subprocess import CalledProcessError, check_call, Popen, DEVNULL, PIPE
 import github3 as gh3
 from datetime import date
 
@@ -45,7 +45,10 @@ SKIP_ADVISORIES = {
 # Repos which require the audit to run in a sub-dir.
 # Maps a (owner, repo-name) tuple to a collection of path components suitiable
 # for use with `os.path.join()`.
-CUSTOM_AUDIT_DIRS = {}
+CUSTOM_AUDIT_DIRS = {
+    ("ykjit", "ykcbf"): ["lang_tests"],
+    ("softdevteam", "error_recovery_experiment"): ["runner/java_parser"],
+}
 
 # XXX Implement skipping for vulnerabilities as needed.
 
@@ -90,11 +93,6 @@ def audit(name, owner, repo):
 
     os.chdir(direc)
 
-    # If there's no Cargo.toml, we can't audit it.
-    if not os.path.exists("Cargo.toml"):
-        print("No Cargo.toml")
-        return True
-
     # Repos which use sub-modules (like Rust forks) need the submodules sources
     # available too.
     try:
@@ -113,6 +111,23 @@ def audit(name, owner, repo):
         # Actually do the audit.
         print(f"Running audit in {audit_dir}")
         os.chdir(audit_dir)
+
+        # If there's no Cargo.toml, we can't audit it.
+        if not os.path.exists("Cargo.toml"):
+            print("No Cargo.toml. Can't audit!")
+            ok = False
+            continue
+
+        # If we didn't clone afresh and `Cargo.lock` isn't tracked in git, we
+        # should run `cargo update` to get the same deps as we would have with
+        # a fresh clone.
+        if src_exists and os.path.exists("Cargo.lock"):
+            try:
+                check_call(["git", "ls-files", "--error-unmatch",
+                            "Cargo.lock"], stdout=DEVNULL, stderr=DEVNULL)
+            except CalledProcessError:
+                # `Cargo.lock` not in git.
+                check_call(["cargo", "update"])
 
         p = Popen([CARGO, "audit", "-D", "warnings", "--json"],
                   stdout=PIPE, stderr=PIPE)
@@ -193,11 +208,11 @@ if __name__ == "__main__":
     # When checking a single repo, don't report skips for other repos "unused".
     rm_skips = set()
     if single_repo:
-        for tup in SKIP_WARNINGS:
+        for tup in SKIP_ADVISORIES:
             if tup[0] != single_repo:
                 rm_skips.add(tup)
     for rm_skip in rm_skips:
-        del SKIP_WARNINGS[rm_skip]
+        del SKIP_ADVISORIES[rm_skip]
 
     os.environ["RUSTUP_HOME"] = RUSTUP_HOME
     os.environ["CARGO_HOME"] = CARGO_HOME
