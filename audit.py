@@ -40,6 +40,14 @@ SKIP_REPOS = [
 SKIP_ADVISORIES = {
     ("yksom", "chrono", "RUSTSEC-2020-0159"): date(2021, 12, 1),
     ("yksom", "time", "RUSTSEC-2020-0071"): date(2021, 12, 1),
+    ("error_recovery_experiment", "chrono",
+        "RUSTSEC-2020-0159"): date(2021, 12, 1),
+    ("error_recovery_experiment", "time",
+        "RUSTSEC-2020-0071"): date(2021, 12, 1),
+    ("grmtools", "chrono", "RUSTSEC-2020-0159"): date(2021, 12, 1),
+    ("grmtools", "time", "RUSTSEC-2020-0071"): date(2021, 12, 1),
+    ("snare", "chrono", "RUSTSEC-2020-0159"): date(2021, 12, 1),
+    ("snare", "time", "RUSTSEC-2020-0071"): date(2021, 12, 1),
 }
 
 # Repos which require the audit to run in a sub-dir.
