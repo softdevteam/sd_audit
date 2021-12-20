@@ -27,8 +27,9 @@ SKIP_REPOS = [
     # Once `cargo audit` passes on upstream rust, we can reconsider these.
     ("softdevteam", "ykrustc"),
     ("softdevteam", "rustgc"),
-    # K2 is unmaintained.
+    # unmaintained repos.
     ("softdevteam", "k2"),
+    ("softdevteam", "error_recovery_experiment"),
 ]
 
 # Security advisories to skip.
@@ -40,10 +41,6 @@ SKIP_REPOS = [
 SKIP_ADVISORIES = {
     ("yksom", "chrono", "RUSTSEC-2020-0159"): date(2021, 12, 1),
     ("yksom", "time", "RUSTSEC-2020-0071"): date(2021, 12, 1),
-    ("error_recovery_experiment", "chrono",
-        "RUSTSEC-2020-0159"): date(2021, 12, 1),
-    ("error_recovery_experiment", "time",
-        "RUSTSEC-2020-0071"): date(2021, 12, 1),
     ("grmtools", "chrono", "RUSTSEC-2020-0159"): date(2021, 12, 1),
     ("grmtools", "time", "RUSTSEC-2020-0071"): date(2021, 12, 1),
     ("snare", "chrono", "RUSTSEC-2020-0159"): date(2021, 12, 1),
@@ -55,7 +52,6 @@ SKIP_ADVISORIES = {
 # for use with `os.path.join()`.
 CUSTOM_AUDIT_DIRS = {
     ("ykjit", "ykcbf"): ["lang_tests"],
-    ("softdevteam", "error_recovery_experiment"): ["runner/java_parser"],
 }
 
 # XXX Implement skipping for vulnerabilities as needed.
