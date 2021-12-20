@@ -41,12 +41,8 @@ SKIP_REPOS = [
 # XXX the keys of this map should also contain the account that owns the repo,
 # in case different accounts contain a repo by the same name.
 SKIP_ADVISORIES = {
-    ("yksom", "chrono", "RUSTSEC-2020-0159"): date(2021, 12, 1),
-    ("yksom", "time", "RUSTSEC-2020-0071"): date(2021, 12, 1),
-    ("grmtools", "chrono", "RUSTSEC-2020-0159"): date(2021, 12, 1),
-    ("grmtools", "time", "RUSTSEC-2020-0071"): date(2021, 12, 1),
-    ("snare", "chrono", "RUSTSEC-2020-0159"): date(2021, 12, 1),
-    ("snare", "time", "RUSTSEC-2020-0071"): date(2021, 12, 1),
+    ("*", "chrono", "RUSTSEC-2020-0159"): date(2022, 3, 1),
+    ("*", "time", "RUSTSEC-2020-0071"): date(2022, 3, 1),
 }
 
 UNMATCHED_SKIP_ADVISORIES = set(SKIP_ADVISORIES.keys())
