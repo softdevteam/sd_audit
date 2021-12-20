@@ -54,8 +54,6 @@ CUSTOM_AUDIT_DIRS = {
     ("ykjit", "ykcbf"): ["lang_tests"],
 }
 
-# XXX Implement skipping for vulnerabilities as needed.
-
 
 def should_skip_advisory(adv_tup):
     assert(len(adv_tup) == 3)
