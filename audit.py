@@ -27,38 +27,66 @@ SKIP_REPOS = [
     # Once `cargo audit` passes on upstream rust, we can reconsider these.
     ("softdevteam", "ykrustc"),
     ("softdevteam", "rustgc"),
-    # K2 is unmaintained.
+    # unmaintained repos.
     ("softdevteam", "k2"),
+    ("softdevteam", "error_recovery_experiment"),
 ]
 
 # Security advisories to skip.
 # (repo-name, problem-package, rustsec-id) -> expiry-date
 # Expiry date is `a datetime.date`, e.g. `date(2021, 12, 2)`.
 #
+# Wild cards (`*`) are allowed in the fields of the key tuple.
+#
 # XXX the keys of this map should also contain the account that owns the repo,
 # in case different accounts contain a repo by the same name.
 SKIP_ADVISORIES = {
-    ("yksom", "chrono", "RUSTSEC-2020-0159"): date(2021, 12, 1),
-    ("yksom", "time", "RUSTSEC-2020-0071"): date(2021, 12, 1),
-    ("error_recovery_experiment", "chrono",
-        "RUSTSEC-2020-0159"): date(2021, 12, 1),
-    ("error_recovery_experiment", "time",
-        "RUSTSEC-2020-0071"): date(2021, 12, 1),
-    ("grmtools", "chrono", "RUSTSEC-2020-0159"): date(2021, 12, 1),
-    ("grmtools", "time", "RUSTSEC-2020-0071"): date(2021, 12, 1),
-    ("snare", "chrono", "RUSTSEC-2020-0159"): date(2021, 12, 1),
-    ("snare", "time", "RUSTSEC-2020-0071"): date(2021, 12, 1),
+    ("*", "chrono", "RUSTSEC-2020-0159"): date(2022, 3, 1),
+    ("*", "time", "RUSTSEC-2020-0071"): date(2022, 3, 1),
 }
+
+UNMATCHED_SKIP_ADVISORIES = set(SKIP_ADVISORIES.keys())
 
 # Repos which require the audit to run in a sub-dir.
 # Maps a (owner, repo-name) tuple to a collection of path components suitiable
 # for use with `os.path.join()`.
 CUSTOM_AUDIT_DIRS = {
     ("ykjit", "ykcbf"): ["lang_tests"],
-    ("softdevteam", "error_recovery_experiment"): ["runner/java_parser"],
 }
 
-# XXX Implement skipping for vulnerabilities as needed.
+
+def should_skip_advisory(adv_tup):
+    assert(len(adv_tup) == 3)
+
+    # Look for an exact match.
+    expiry = None
+    if adv_tup in SKIP_ADVISORIES:
+        UNMATCHED_SKIP_ADVISORIES.remove(adv_tup)
+        expiry = SKIP_ADVISORIES[adv_tup]
+    else:
+        # Now try wildcard matching.
+        for (skip_tup, skip_expiry) in SKIP_ADVISORIES.items():
+            match_list = list(adv_tup)
+            assert(len(skip_tup) == 3)
+            for idx in range(len(skip_tup)):
+                if skip_tup[idx] == '*':
+                    match_list[idx] = "*"
+            if tuple(match_list) == skip_tup:
+                if skip_tup in UNMATCHED_SKIP_ADVISORIES:
+                    UNMATCHED_SKIP_ADVISORIES.remove(skip_tup)
+                expiry = skip_expiry
+                break
+
+    if expiry is None:
+        return False
+
+    _, pkg, adv_id = adv_tup
+    if expiry <= date.today():
+        print(f"Note: skip for {pkg}/{adv_id} has expired.")
+        return False
+
+    print(f"Note: {pkg}/{adv_id} was skipped.")
+    return True
 
 
 def get_sd_rust_repos(token_file):
@@ -184,19 +212,8 @@ def process_json(repo_name, js):
             problems.add((repo_name, None, None))
 
     for tup in problems:
-        try:
-            expiry = SKIP_ADVISORIES[tup]
-        except KeyError:
+        if not should_skip_advisory(tup):
             ret = False
-        else:
-            del SKIP_ADVISORIES[tup]
-            _, pkg, adv_id = tup
-            if expiry <= date.today():
-                print(f"Note: skip for {pkg}/{adv_id} "
-                      "has expired.")
-                ret = False
-            else:
-                print(f"Note: {pkg}/{adv_id} was skipped.")
 
     return ret
 
@@ -212,15 +229,6 @@ if __name__ == "__main__":
         single_repo = sys.argv[2]
     except IndexError:
         single_repo = None
-
-    # When checking a single repo, don't report skips for other repos "unused".
-    rm_skips = set()
-    if single_repo:
-        for tup in SKIP_ADVISORIES:
-            if tup[0] != single_repo:
-                rm_skips.add(tup)
-    for rm_skip in rm_skips:
-        del SKIP_ADVISORIES[rm_skip]
 
     os.environ["RUSTUP_HOME"] = RUSTUP_HOME
     os.environ["CARGO_HOME"] = CARGO_HOME
@@ -242,9 +250,9 @@ if __name__ == "__main__":
         if not res:
             problematic.append(r.name)
 
-    if SKIP_ADVISORIES:
-        print("Warning: Unneccessarily skipped warnings:")
-        for i in SKIP_ADVISORIES:
+    if UNMATCHED_SKIP_ADVISORIES:
+        print("Warning: the following advisory skips were unmatched:")
+        for i in UNMATCHED_SKIP_ADVISORIES:
             print(f"  {i}")
 
     if problematic:
