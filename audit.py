@@ -30,6 +30,8 @@ SKIP_REPOS = [
     # unmaintained repos.
     ("softdevteam", "k2"),
     ("softdevteam", "error_recovery_experiment"),
+    # externally maintained
+    ("softdevteam", "WLambda"),
 ]
 
 # Security advisories to skip.
