@@ -27,6 +27,7 @@ SKIP_REPOS = [
     # Once `cargo audit` passes on upstream rust, we can reconsider these.
     ("softdevteam", "ykrustc"),
     ("softdevteam", "rustgc"),
+    ("softdevteam", "alloy"),
     # unmaintained repos.
     ("softdevteam", "k2"),
     ("softdevteam", "error_recovery_experiment"),
