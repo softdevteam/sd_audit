@@ -46,7 +46,7 @@ SKIP_REPOS = [
 SKIP_ADVISORIES = {
     ("*", "chrono", "RUSTSEC-2020-0159"): date(2023, 3, 1),
     ("*", "time", "RUSTSEC-2020-0071"): date(2023, 3, 1),
-    ("yk", "atty", "RUSTSEC-2021-0145"): date(2023, 3, 1),
+    ("yk", "atty", "RUSTSEC-2021-0145"): date(2023, 6, 1),
 }
 
 UNMATCHED_SKIP_ADVISORIES = set(SKIP_ADVISORIES.keys())
