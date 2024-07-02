@@ -28,6 +28,8 @@ SKIP_REPOS = [
     ("softdevteam", "ykrustc"),
     ("softdevteam", "rustgc"),
     ("softdevteam", "alloy"),
+    # ykllvm contains rust files and thus gets categorised as a rust repo.
+    ("ykjit", "ykllvm"),
     # unmaintained repos.
     ("softdevteam", "k2"),
     ("softdevteam", "error_recovery_experiment"),
