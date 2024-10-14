@@ -57,6 +57,7 @@ UNMATCHED_SKIP_ADVISORIES = set(SKIP_ADVISORIES.keys())
 # for use with `os.path.join()`.
 CUSTOM_AUDIT_DIRS = {
     ("ykjit", "ykcbf"): ["lang_tests"],
+    ("ykjit", "yk-benchmarks"): ["reporter"],
 }
 
 
