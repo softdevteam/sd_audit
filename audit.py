@@ -28,6 +28,7 @@ SKIP_REPOS = [
     ("softdevteam", "ykrustc"),
     ("softdevteam", "rustgc"),
     ("softdevteam", "rustgc_paper"),
+    ("softdevteam", "rustgc_paper_experiment"),
     ("softdevteam", "alloy"),
     # ykllvm contains rust files and thus gets categorised as a rust repo.
     ("ykjit", "ykllvm"),
@@ -47,7 +48,6 @@ SKIP_REPOS = [
 # XXX the keys of this map should also contain the account that owns the repo,
 # in case different accounts contain a repo by the same name.
 SKIP_ADVISORIES = {
-    ("yk", "atty", "RUSTSEC-2021-0145"): date(2023, 6, 1),
 }
 
 UNMATCHED_SKIP_ADVISORIES = set(SKIP_ADVISORIES.keys())
@@ -57,6 +57,7 @@ UNMATCHED_SKIP_ADVISORIES = set(SKIP_ADVISORIES.keys())
 # for use with `os.path.join()`.
 CUSTOM_AUDIT_DIRS = {
     ("ykjit", "ykcbf"): ["lang_tests"],
+    ("ykjit", "yk-benchmarks"): ["reporter"],
 }
 
 
