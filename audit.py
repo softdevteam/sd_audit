@@ -47,7 +47,6 @@ SKIP_REPOS = [
 # XXX the keys of this map should also contain the account that owns the repo,
 # in case different accounts contain a repo by the same name.
 SKIP_ADVISORIES = {
-    ("yk", "atty", "RUSTSEC-2021-0145"): date(2023, 6, 1),
 }
 
 UNMATCHED_SKIP_ADVISORIES = set(SKIP_ADVISORIES.keys())
