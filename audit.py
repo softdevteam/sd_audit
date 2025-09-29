@@ -63,7 +63,7 @@ CUSTOM_AUDIT_DIRS = {
 
 
 def should_skip_advisory(adv_tup):
-    assert(len(adv_tup) == 3)
+    assert len(adv_tup) == 3
 
     # Look for an exact match.
     expiry = None
@@ -74,7 +74,7 @@ def should_skip_advisory(adv_tup):
         # Now try wildcard matching.
         for (skip_tup, skip_expiry) in SKIP_ADVISORIES.items():
             match_list = list(adv_tup)
-            assert(len(skip_tup) == 3)
+            assert len(skip_tup) == 3
             for idx in range(len(skip_tup)):
                 if skip_tup[idx] == '*':
                     match_list[idx] = "*"
