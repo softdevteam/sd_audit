@@ -36,6 +36,8 @@ SKIP_REPOS = [
     # unmaintained repos.
     ("softdevteam", "k2"),
     ("softdevteam", "error_recovery_experiment"),
+    ("softdevteam", "gc_bench"),
+    ("softdevteam", "vtable_bench"),
     # externally maintained
     ("softdevteam", "WLambda"),
 ]
