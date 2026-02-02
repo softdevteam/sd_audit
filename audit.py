@@ -51,6 +51,10 @@ SKIP_REPOS = [
 # XXX the keys of this map should also contain the account that owns the repo,
 # in case different accounts contain a repo by the same name.
 SKIP_ADVISORIES = {
+        # used by grmtools and typed-index-collections.
+        #
+        # https://github.com/zheland/typed-index-collections/issues/10
+        ("yk", "bincode", "RUSTSEC-2025-0141"): date(2026, 3, 2),
 }
 
 UNMATCHED_SKIP_ADVISORIES = set(SKIP_ADVISORIES.keys())
